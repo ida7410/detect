@@ -86,8 +86,8 @@ while True:
     label = object_in_box(boxes, depth, x1, y1, x2, y2)
 
     now = time.time()
-    message, interrupt = announcer.decide(dist, now, is_speaking())
-
+    message, interrupt = announcer.decide(dist, now, is_speaking(), label)
+    
     if message:
         if interrupt:
             stop()

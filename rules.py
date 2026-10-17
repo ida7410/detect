@@ -7,15 +7,17 @@ class Announcer:
     def __init__(self):
         self.last_dist = None
         self.last_time = 0
-        self.said_stop = False   # NEW: did we already say "Stop"?
+        self.said_stop = False
+        self.last_label = None
 
-    def decide(self, dist, now, speaking):
+    def decide(self, dist, now, speaking, label=None):
         """Return (sentence, interrupt).
         sentence = None  -> stay quiet
         interrupt = True -> cut off the current sentence first"""
         if dist >= SPEAK_RANGE:
             self.last_dist = None
             self.said_stop = False
+            self.last_label = None
             return None, False
 
         rounded = round(dist * 2) / 2
@@ -29,7 +31,9 @@ class Announcer:
                 return None, False
             interrupt = True
         else:
-            changed = self.last_dist is None or abs(rounded - self.last_dist) >= 0.5
+            changed = (self.last_dist is None 
+                        or abs(rounded - self.last_dist) >= 0.5
+                        or label != self.last_label)
             repeat = now - self.last_time >= REPEAT_EVERY
             if not (changed or repeat):
                 return None, False
@@ -38,6 +42,9 @@ class Announcer:
         self.last_dist = rounded
         self.last_time = now
         self.said_stop = very_close
+        self.last_label = label
+
+        name = label.capitalize() if label else "Object"
         if very_close:
-            return "Stop. Object very close.", interrupt
-        return f"Object ahead, {rounded:g} meters.", interrupt
+            return f"Stop. {name} very close.", interrupt
+        return f"{name} ahead, {rounded:g} meters.", interrupt
