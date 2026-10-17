@@ -9,6 +9,8 @@ from voice import speak, is_speaking, stop
 model = YOLO("yolo26n-depth.pt")
 announcer = Announcer()
 SCALE = 0.53
+BOX_W = 0.5   # box width  = half of the screen
+BOX_H = 0.5   # box height = half of the screen
 
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
@@ -26,8 +28,12 @@ while True:
     depth = cv2.resize(depth, (frame.shape[1], frame.shape[0])) * SCALE # resize to fit in cam
     h, w = depth.shape
     center = depth[h//2 - 20:h//2 + 20, w//2 - 20:w//2 + 20]
-    dist = float(np.median(center)) # get distance from centre
-
+    
+    bw, bh = int(w * BOX_W), int(h * BOX_H)       # box size in pixels
+    x1, x2 = (w - bw) // 2, (w + bw) // 2          # left and right edges
+    y1, y2 = (h - bh) // 2, (h + bh) // 2          # top and bottom edges
+    dist = float(np.percentile(depth[y1:y2, x1:x2], 10))   # closest stuff in the box
+    
     now = time.time()
     message, interrupt = announcer.decide(dist, now, is_speaking())
 
@@ -45,7 +51,7 @@ while True:
     prev = now
 
     for img in (frame, vis):
-        cv2.rectangle(img, (w//2 - 20, h//2 - 20), (w//2 + 20, h//2 + 20), (0, 255, 0), 2)
+        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
         cv2.putText(img, f"Center: {dist:.2f} m   FPS: {fps:.1f}", (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
