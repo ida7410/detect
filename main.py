@@ -3,7 +3,12 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 
+from rules import Announcer
+from voice import speak, is_speaking
+
 model = YOLO("yolo26n-depth.pt")
+announcer = Announcer()
+SCALE = 0.53
 
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
@@ -18,18 +23,22 @@ while True:
 
     result = model(frame, imgsz=320, verbose=False)[0] # verbose false: no text everytime
     depth = result.depth.data.cpu().numpy() # get depth grid data, 1 per pixel
-    depth = cv2.resize(depth, (frame.shape[1], frame.shape[0])) # resize to fit in cam
-
+    depth = cv2.resize(depth, (frame.shape[1], frame.shape[0])) * SCALE # resize to fit in cam
     h, w = depth.shape
     center = depth[h//2 - 20:h//2 + 20, w//2 - 20:w//2 + 20]
     dist = float(np.median(center)) # get distance from centre
 
+    now = time.time()
+    message = announcer.decide(dist, now, is_speaking())
+
+    if message:
+        print(message)
+        speak(message)
+
+    # debug window
     vis = np.clip(depth, 0, 5)
     vis = (255 - vis / 5 * 255).astype(np.uint8) # convert depth to colour
     vis = cv2.applyColorMap(vis, cv2.COLORMAP_INFERNO)
-
-    # get fps
-    now = time.time()
     fps = 1 / (now - prev)
     prev = now
 
