@@ -19,3 +19,7 @@ def speak(text):
 
 def is_speaking():
     return _speaker is not None and _speaker.poll() is None
+
+def stop():
+    if is_speaking():
+        _speaker.terminate()

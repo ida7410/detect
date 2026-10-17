@@ -4,7 +4,7 @@ import numpy as np
 from ultralytics import YOLO
 
 from rules import Announcer
-from voice import speak, is_speaking
+from voice import speak, is_speaking, stop
 
 model = YOLO("yolo26n-depth.pt")
 announcer = Announcer()
@@ -29,9 +29,11 @@ while True:
     dist = float(np.median(center)) # get distance from centre
 
     now = time.time()
-    message = announcer.decide(dist, now, is_speaking())
+    message, interrupt = announcer.decide(dist, now, is_speaking())
 
     if message:
+        if interrupt:
+            stop()
         print(message)
         speak(message)
 
