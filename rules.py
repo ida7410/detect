@@ -1,7 +1,4 @@
-SPEAK_RANGE = 3.0
-REPEAT_EVERY = 4.0
-VERY_CLOSE = 0.7
-
+from config import SPEAK_RANGE, REPEAT_EVERY, VERY_CLOSE
 
 class Announcer:
     def __init__(self):
@@ -24,7 +21,7 @@ class Announcer:
         very_close = dist < VERY_CLOSE
 
         if speaking:
-            # NEW: only interrupt for something more urgent
+            # only interrupt for something more urgent
             much_closer = self.last_dist is not None and rounded <= self.last_dist - 1.0
             urgent = (very_close and not self.said_stop) or much_closer
             if not urgent:

@@ -10,3 +10,7 @@ IMPORTANT = {"person", "bicycle", "car", "motorcycle", "bus", "truck",
              "chair", "bench", "couch", "dining table", "dog",
              "fire hydrant", "stop sign", "potted plant", "suitcase"}
 MIN_CONF = 0.5
+
+SPEAK_RANGE = 3.0
+REPEAT_EVERY = 4.0
+VERY_CLOSE = 1.0
