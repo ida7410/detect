@@ -14,3 +14,8 @@ MIN_CONF = 0.5
 SPEAK_RANGE = 3.0
 REPEAT_EVERY = 4.0
 VERY_CLOSE = 1.0
+
+EDGE_STEP = 8 # compare each pixel with its right n pixels
+EDGE_JUMP = 0.3 # distance jumps by n%+ = a "cliff" (an object's edge)
+EDGE_ROWS = 0.2 # wall if n% or fewer of the rows contain a cliff
+SIDE_RANGE = 1.0
