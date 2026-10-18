@@ -1,11 +1,16 @@
 import cv2
 import numpy as np
-from ultralytics import YOLO
+from ultralytics import YOLO, YOLOE
 
 import config
 
 depth_model = YOLO(config.DEPTH_MODEL)
-detector = YOLO(config.DETECT_MODEL)
+
+if config.USE_YOLOE:
+    detector = YOLOE(config.DETECT_MODEL)
+    detector.set_classes(config.CLASSES)
+else:
+    detector = YOLO(config.DETECT_MODEL)
 
 
 def read_boxes(det):
@@ -59,6 +64,28 @@ def side_check(depth, boxes, sx1, y1, sx2, y2):
     return object_in_box(boxes, depth, sx1, y1, sx2, y2) or "wall"
 
 
+def height_map(depth):
+    """Height above the floor(metres) for every pixel."""
+    h, w = depth.shape
+
+    # turn how many rows below the middle into angle
+    f = (h / 2) / np.tan(np.radians(config.CAM_VFOV / 2)) # how many rows below the middle
+    rows = np.arange(h).reshape(-1, 1) # rows 0, 1, ... one per row
+    down = depth * (rows - h / 2) / f # how far below the camera's centre line
+    # rows - h / 2 = each row's relative position to the middle, (-) above, (+) below
+
+    tilt = np.radians(config.CAM_TILT) # add the tilt
+    drop = down * np.cos(tilt) + depth * np.sin(tilt) # get total drop below camera
+
+    return config.CAM_HEIGHT - drop # height = camera height - drop
+
+
+def find_in_path(path_depth, mask): # mask: T/F grid
+    """If enough of the path matches the mask, return how close it is. Else None."""
+    if mask.mean() < config.LOW_MIN: # too few pixels -> noise
+        return None
+    return float(np.percentile(path_depth[mask], 10)) # closest part of the matching pixels
+
 
 def look(frame):
     """Run both AI models on one frame. Returns everything the app needs."""
@@ -66,6 +93,7 @@ def look(frame):
 
     result = depth_model(frame, imgsz=config.IMG_SIZE, verbose=False)[0]
     depth = cv2.resize(result.depth.data.cpu().numpy(), (w, h)) * config.SCALE
+    heights = height_map(depth)
 
     x1, y1, x2, y2 = cane_box(w, h)
     region = depth[y1:y2, x1:x2]
@@ -83,5 +111,21 @@ def look(frame):
     left = side_check(depth, boxes, 0, y1, x1, y2)
     right = side_check(depth, boxes, x2, y1, w, y2)
 
-    return {"dist": dist, "label": label, "boxes": boxes, 
-            "box": (x1, y1, x2, y2), "edges": edges, "left": left, "right": right}
+    if label == "wall":          # facing a wall: the sides are the same wall, not walls beside me
+        left = right = None
+
+    # low obstacles and drop-offs in my path
+    path_d = depth[y1:, x1:x2] # path area from the top of green box all the way down
+    path_h = heights[y1:, x1:x2]
+    near = path_d < config.LOW_RANGE
+    low = find_in_path(path_d, near & (path_h >= config.FLOOR_TOL) & (path_h < config.LOW_TOP))
+    drop = find_in_path(path_d, near & (path_h < -config.FLOOR_TOL))
+
+    if drop is not None: # most dangerous: always wins
+        dist, label = drop, "drop-off"
+    elif low is not None and low < dist - 0.3:   # clearly closer than what's in the green box
+        dist = low
+        label = object_in_box(boxes, depth, x1, y1, x2, h) or "low obstacle"
+
+    return {"dist": dist, "label": label, "boxes": boxes, "box": (x1, y1, x2, y2), 
+            "edges": edges, "left": left, "right": right, "heights": heights, "depth": depth}

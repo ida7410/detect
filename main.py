@@ -1,11 +1,12 @@
 import threading
 import time
 import cv2
+import config
 
 from camera import look
 from rules import Announcer
 from voice import speak, is_speaking, stop
-from draw import draw_boxes, draw_info
+from draw import draw_boxes, draw_info, draw_heights
 
 announcer = Announcer()
 
@@ -28,8 +29,10 @@ def ai_worker():
             continue
 
         info = look(frame) # camera
-        message, interrupt = announcer.decide( # should it describe?
-            info["dist"], time.time(), is_speaking(), info["label"])
+        message, interrupt = announcer.decide(
+            info["dist"], time.time(), is_speaking(), info["label"],
+            info["left"], info["right"])
+        
         if message: # voice
             if interrupt:
                 stop()
@@ -67,12 +70,22 @@ while True:
 
     shown = frame.copy()
     if info:
+        draw_heights(shown, info["heights"], info["depth"])
         draw_boxes(shown, info["boxes"])
     draw_info(shown, info, video_fps, fps_ai)
 
     cv2.imshow("SafeStep", shown)
-    if cv2.waitKey(1) & 0xFF == ord("q"):
+    key = cv2.waitKey(1) & 0xFF
+    if key == ord("q"):
         break
+    # --- live tuning (laptop only) ---
+    tune = {ord("u"): ("CAM_TILT", +1),     ord("j"): ("CAM_TILT", -1),
+            ord("i"): ("CAM_HEIGHT", +0.05), ord("k"): ("CAM_HEIGHT", -0.05),
+            ord("o"): ("CAM_VFOV", +2),     ord("l"): ("CAM_VFOV", -2)}
+    if key in tune:
+        name, step = tune[key]
+        setattr(config, name, getattr(config, name) + step)
+        print(f"tilt={config.CAM_TILT:.0f}°  height={config.CAM_HEIGHT:.2f} m  vfov={config.CAM_VFOV:.0f}°")
 
 running = False
 cap.release()
