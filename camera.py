@@ -106,6 +106,9 @@ def look(frame):
     left = side_check(depth, boxes, 0, y1, x1, y2)
     right = side_check(depth, boxes, x2, y1, w, y2)
 
+    if label == "wall":          # facing a wall: the sides are the same wall, not walls beside me
+        left = right = None
+
     # low obstacles and drop-offs in my path
     path_d = depth[y1:, x1:x2] # path area from the top of green box all the way down
     path_h = heights[y1:, x1:x2]
