@@ -75,6 +75,13 @@ def height_map(depth):
     return config.CAM_HEIGHT - drop # height = camera height - drop
 
 
+def find_in_path(path_depth, mask): # mask: T/F grid
+    """If enough of the path matches the mask, return how close it is. Else None."""
+    if mask.mean() < config.LOW_MIN: # too few pixels -> noise
+        return None
+    return float(np.percentile(path_depth[mask], 10)) # closest part of the matching pixels
+
+
 def look(frame):
     """Run both AI models on one frame. Returns everything the app needs."""
     h, w = frame.shape[:2]
@@ -98,6 +105,18 @@ def look(frame):
 
     left = side_check(depth, boxes, 0, y1, x1, y2)
     right = side_check(depth, boxes, x2, y1, w, y2)
+
+    # low obstacles and drop-offs in my path
+    path_d = depth[y1:, x1:x2] # path area from the top of green box all the way down
+    path_h = heights[y1:, x1:x2]
+    near = path_d < config.LOW_RANGE
+    low = find_in_path(path_d, near & (path_h >= config.FLOOR_TOL) & (path_h < config.LOW_TOP))
+    drop = find_in_path(path_d, near & (path_h < -config.FLOOR_TOL))
+
+    if drop is not None: # most dangerous: always wins
+        dist, label = drop, "drop-off"
+    elif low is not None and low < dist - 0.3:   # clearly closer than what's in the green box
+        dist, label = low, "low obstacle"
 
     return {"dist": dist, "label": label, "boxes": boxes, "box": (x1, y1, x2, y2), 
             "edges": edges, "left": left, "right": right, "heights": heights, "depth": depth}

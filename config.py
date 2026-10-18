@@ -29,3 +29,7 @@ CAM_HEIGHT = 1.00 # meters from the floor to the webcam
 CAM_TILT = 0.0 # degrees pointing down (0 = looking straight ahead)
 CAM_VFOV = 45.0 # degrees the camera sees from top to bottom
 LOW_RANGE = 3.0 # only care about low obstacles / drop-offs closer than this (meters)
+
+FLOOR_TOL = 0.15 # meters: within ±n cm of 0 counts as floor
+LOW_TOP = 1.0 # meters: low obstacles are between FLOOR_TOL and this height
+LOW_MIN = 0.03 # at least 3% of the path area must be hazard pixels to count

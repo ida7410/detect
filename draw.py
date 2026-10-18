@@ -32,7 +32,7 @@ def draw_heights(img, heights, depth):
     """Tint pixels: green = floor, yellow = low obstacle, red = below the floor"""
     near = depth < config.LOW_RANGE # only color things lower range
     overlay = img.copy()
-    overlay[near & (np.abs(heights) < 0.1)] = (0, 255, 0) # floor
-    overlay[near & (heights >= 0.1) & (heights < 1.0)] = (0, 255, 255) # low obstacle
-    overlay[near & (heights < -0.1)] = (0, 0, 255)
+    overlay[near & (np.abs(heights) < config.FLOOR_TOL)] = (0, 255, 0) # floor
+    overlay[near & (heights >= config.FLOOR_TOL) & (heights < config.LOW_TOP)] = (0, 255, 255) # low obstacle
+    overlay[near & (heights < -config.FLOOR_TOL)] = (0, 0, 255) # below surface
     cv2.addWeighted(overlay, 0.35, img, 0.65, 0, dst=img)
