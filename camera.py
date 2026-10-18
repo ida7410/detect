@@ -1,11 +1,16 @@
 import cv2
 import numpy as np
-from ultralytics import YOLO
+from ultralytics import YOLO, YOLOE
 
 import config
 
 depth_model = YOLO(config.DEPTH_MODEL)
-detector = YOLO(config.DETECT_MODEL)
+
+if config.USE_YOLOE:
+    detector = YOLOE(config.DETECT_MODEL)
+    detector.set_classes(config.CLASSES)
+else:
+    detector = YOLO(config.DETECT_MODEL)
 
 
 def read_boxes(det):

@@ -1,14 +1,25 @@
 DEPTH_MODEL = "yolo26n-depth.pt"
-DETECT_MODEL = "yolo26n.pt"
 IMG_SIZE = 320
 
 SCALE = 0.53
 BOX_W = 0.5
 BOX_H = 0.5
 
-IMPORTANT = {"person", "bicycle", "car", "motorcycle", "bus", "truck",
-             "chair", "bench", "couch", "dining table", "dog",
-             "fire hydrant", "stop sign", "potted plant", "suitcase"}
+USE_YOLOE = True  # True = YOLOE (your own word list), False = normal yolo26n
+DETECT_MODEL = "yoloe-26s-seg.pt" if USE_YOLOE else "yolo26n.pt"
+
+# Words YOLOE should look for. Plain, common words work best.
+CLASSES = ["person", "bicycle", "car", "chair", "bench", "table", "dog",
+           "stairs", "door", "pole", "trash can", "potted plant", "suitcase"]
+# TODO(phone): this list gets baked into the exported model; re-export to change it
+
+# Names the normal yolo26n detector uses (its fixed list of 80)
+COCO_IMPORTANT = {"person", "bicycle", "car", "motorcycle", "bus", "truck",
+                  "chair", "bench", "couch", "dining table", "dog",
+                  "fire hydrant", "stop sign", "potted plant", "suitcase"}
+
+IMPORTANT = set(CLASSES) if USE_YOLOE else COCO_IMPORTANT
+
 MIN_CONF = 0.5
 
 SPEAK_RANGE = 3.0
