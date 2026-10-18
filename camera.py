@@ -100,4 +100,4 @@ def look(frame):
     right = side_check(depth, boxes, x2, y1, w, y2)
 
     return {"dist": dist, "label": label, "boxes": boxes, "box": (x1, y1, x2, y2), 
-            "edges": edges, "left": left, "right": right, "heights": heights}
+            "edges": edges, "left": left, "right": right, "heights": heights, "depth": depth}

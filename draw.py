@@ -1,4 +1,5 @@
 import cv2
+import config
 import numpy as np
 
 FONT = cv2.FONT_HERSHEY_SIMPLEX
@@ -27,10 +28,11 @@ def draw_info(img, info, video_fps, ai_fps):
                 (10, 30), FONT, 0.7, (0, 255, 0), 2)
 
 
-def draw_heights(img, heights):
+def draw_heights(img, heights, depth):
     """Tint pixels: green = floor, yellow = low obstacle, red = below the floor"""
+    near = depth < config.LOW_RANGE # only color things lower range
     overlay = img.copy()
-    overlay[np.abs(heights) < 0.1] = (0, 255, 0) # floor
-    overlay[(heights >= 0.1) & (heights < 1.0)] = (0, 255, 255) # low obstacle
-    overlay[heights < -0.1] = (0, 0, 255)
+    overlay[near & (np.abs(heights) < 0.1)] = (0, 255, 0) # floor
+    overlay[near & (heights >= 0.1) & (heights < 1.0)] = (0, 255, 255) # low obstacle
+    overlay[near & (heights < -0.1)] = (0, 0, 255)
     cv2.addWeighted(overlay, 0.35, img, 0.65, 0, dst=img)

@@ -1,6 +1,7 @@
 import threading
 import time
 import cv2
+import config
 
 from camera import look
 from rules import Announcer
@@ -67,13 +68,22 @@ while True:
 
     shown = frame.copy()
     if info:
-        draw_heights(shown, info["heights"])
+        draw_heights(shown, info["heights"], info["depth"])
         draw_boxes(shown, info["boxes"])
     draw_info(shown, info, video_fps, fps_ai)
 
     cv2.imshow("SafeStep", shown)
-    if cv2.waitKey(1) & 0xFF == ord("q"):
+    key = cv2.waitKey(1) & 0xFF
+    if key == ord("q"):
         break
+    # --- live tuning (laptop only) ---
+    tune = {ord("u"): ("CAM_TILT", +1),     ord("j"): ("CAM_TILT", -1),
+            ord("i"): ("CAM_HEIGHT", +0.05), ord("k"): ("CAM_HEIGHT", -0.05),
+            ord("o"): ("CAM_VFOV", +2),     ord("l"): ("CAM_VFOV", -2)}
+    if key in tune:
+        name, step = tune[key]
+        setattr(config, name, getattr(config, name) + step)
+        print(f"tilt={config.CAM_TILT:.0f}°  height={config.CAM_HEIGHT:.2f} m  vfov={config.CAM_VFOV:.0f}°")
 
 running = False
 cap.release()

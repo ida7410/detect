@@ -28,3 +28,4 @@ SIDE_RANGE = 1.0
 CAM_HEIGHT = 1.00 # meters from the floor to the webcam
 CAM_TILT = 0.0 # degrees pointing down (0 = looking straight ahead)
 CAM_VFOV = 45.0 # degrees the camera sees from top to bottom
+LOW_RANGE = 3.0 # only care about low obstacles / drop-offs closer than this (meters)
