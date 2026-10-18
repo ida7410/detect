@@ -116,7 +116,8 @@ def look(frame):
     if drop is not None: # most dangerous: always wins
         dist, label = drop, "drop-off"
     elif low is not None and low < dist - 0.3:   # clearly closer than what's in the green box
-        dist, label = low, "low obstacle"
+        dist = low
+        label = object_in_box(boxes, depth, x1, y1, x2, h) or "low obstacle"
 
     return {"dist": dist, "label": label, "boxes": boxes, "box": (x1, y1, x2, y2), 
             "edges": edges, "left": left, "right": right, "heights": heights, "depth": depth}

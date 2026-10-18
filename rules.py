@@ -13,11 +13,19 @@ class Announcer:
         """Return (sentence, interrupt).
         sentence = None  -> stay quiet
         interrupt = True -> cut off the current sentence first"""
+        # NEW: front has priority; if it has nothing to say, sides fill the silence
+        message, interrupt = self.front_message(dist, now, speaking, label)
+        if message is None:
+            message = self.side_message(now, speaking, left, right)
+        return message, interrupt
+
+    def front_message(self, dist, now, speaking, label):
+        """What's ahead (this is the old decide, unchanged inside)."""
         if dist >= SPEAK_RANGE:
             self.last_dist = None
             self.said_stop = False
             self.last_label = None
-            return self.side_message(now, speaking, left, right), False   # NEW: path clear -> talk about sides
+            return None, False   # CHANGED: path clear -> nothing ahead (decide() asks the sides)
 
         rounded = round(dist * 2) / 2
         very_close = dist < VERY_CLOSE
@@ -49,7 +57,7 @@ class Announcer:
         return f"{name} ahead, {rounded:g} meters.", interrupt
 
     def side_message(self, now, speaking, left, right):
-        """Path ahead is clear: mention what's beside the user, if it changed."""
+        """Front is quiet: mention what's beside the user, if it changed."""
         sides = (left, right)
         if left is None and right is None:
             self.last_sides = sides # nothing beside me: remember that
