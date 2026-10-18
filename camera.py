@@ -41,6 +41,25 @@ def cane_box(w, h):
     return (w - bw) // 2, (h - bh) // 2, (w + bw) // 2, (h + bh) // 2
 
 
+def edge_rows(area):
+    """Share of rows (0.0 to 1.0) that contains a 'cliff'"""
+    k = config.EDGE_STEP
+    here = area[:, :-k] # each pixel except right k pixles
+    neighbor = area[:, k:] # each pixel after k pixels
+    jump = np.abs(neighbor - here) / np.minimum(neighbor, here) # jump as %
+    has_cliff = (jump > config.EDGE_JUMP).any(axis=1) # True for each row with a cliff
+    return float(has_cliff.mean()) # share of rows with a cliff
+
+
+def side_check(depth, boxes, sx1, y1, sx2, y2):
+    """One side zone: a name 'wall' or None if nothing is close"""
+    d = float(np.percentile(depth[y1:y2, sx1:sx2], 10))
+    if d >= config.SIDE_RANGE:
+        return None
+    return object_in_box(boxes, depth, sx1, y1, sx2, y2) or "wall"
+
+
+
 def look(frame):
     """Run both AI models on one frame. Returns everything the app needs."""
     h, w = frame.shape[:2]
@@ -49,10 +68,20 @@ def look(frame):
     depth = cv2.resize(result.depth.data.cpu().numpy(), (w, h)) * config.SCALE
 
     x1, y1, x2, y2 = cane_box(w, h)
-    dist = float(np.percentile(depth[y1:y2, x1:x2], 10))
+    region = depth[y1:y2, x1:x2]
+    dist = float(np.percentile(region, 10))
 
     det = detector(frame, imgsz=config.IMG_SIZE, verbose=False)[0]
     boxes = read_boxes(det)
     label = object_in_box(boxes, depth, x1, y1, x2, y2)
 
-    return {"dist": dist, "label": label, "boxes": boxes, "box": (x1, y1, x2, y2)}
+    band = depth[y1:y2, :]
+    edges = edge_rows(band)
+    if label is None and edges <= config.EDGE_ROWS:
+        label = "wall"
+
+    left = side_check(depth, boxes, 0, y1, x1, y2)
+    right = side_check(depth, boxes, x2, y1, w, y2)
+
+    return {"dist": dist, "label": label, "boxes": boxes, 
+            "box": (x1, y1, x2, y2), "edges": edges, "left": left, "right": right}

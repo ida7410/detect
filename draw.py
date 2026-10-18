@@ -21,6 +21,6 @@ def draw_info(img, info, video_fps, ai_fps):
     else:
         x1, y1, x2, y2 = info["box"]
         cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        text = f"{info['label'] or 'object'}: {info['dist']:.2f} m"
+        text = f"{info['label'] or 'object'}: {info['dist']:.2f} m  edges {info['edges']:.0%}"
     cv2.putText(img, f"{text}   video {video_fps:.0f} / AI {ai_fps:.1f} FPS",
                 (10, 30), FONT, 0.7, (0, 255, 0), 2)
