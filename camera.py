@@ -59,6 +59,21 @@ def side_check(depth, boxes, sx1, y1, sx2, y2):
     return object_in_box(boxes, depth, sx1, y1, sx2, y2) or "wall"
 
 
+def height_map(depth):
+    """Height above the floor(metres) for every pixel."""
+    h, w = depth.shape
+
+    # turn how many rows below the middle into angle
+    f = (h / 2) / np.tan(np.radians(config.CAM_VFOV / 2)) # how many rows below the middle
+    rows = np.arange(h).reshape(-1, 1) # rows 0, 1, ... one per row
+    down = depth * (rows - h / 2) / f # how far below the camera's centre line
+    # rows - h / 2 = each row's relative position to the middle, (-) above, (+) below
+
+    tilt = np.radians(config.CAM_TILT) # add the tilt
+    drop = down * np.cos(tilt) + depth * np.sin(tilt) # get total drop below camera
+
+    return config.CAM_HEIGHT - drop # height = camera height - drop
+
 
 def look(frame):
     """Run both AI models on one frame. Returns everything the app needs."""
@@ -66,6 +81,7 @@ def look(frame):
 
     result = depth_model(frame, imgsz=config.IMG_SIZE, verbose=False)[0]
     depth = cv2.resize(result.depth.data.cpu().numpy(), (w, h)) * config.SCALE
+    heights = height_map(depth)
 
     x1, y1, x2, y2 = cane_box(w, h)
     region = depth[y1:y2, x1:x2]
@@ -83,5 +99,5 @@ def look(frame):
     left = side_check(depth, boxes, 0, y1, x1, y2)
     right = side_check(depth, boxes, x2, y1, w, y2)
 
-    return {"dist": dist, "label": label, "boxes": boxes, 
-            "box": (x1, y1, x2, y2), "edges": edges, "left": left, "right": right}
+    return {"dist": dist, "label": label, "boxes": boxes, "box": (x1, y1, x2, y2), 
+            "edges": edges, "left": left, "right": right, "heights": heights}

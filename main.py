@@ -5,7 +5,7 @@ import cv2
 from camera import look
 from rules import Announcer
 from voice import speak, is_speaking, stop
-from draw import draw_boxes, draw_info
+from draw import draw_boxes, draw_info, draw_heights
 
 announcer = Announcer()
 
@@ -67,6 +67,7 @@ while True:
 
     shown = frame.copy()
     if info:
+        draw_heights(shown, info["heights"])
         draw_boxes(shown, info["boxes"])
     draw_info(shown, info, video_fps, fps_ai)
 

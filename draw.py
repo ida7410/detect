@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 FONT = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -24,3 +25,12 @@ def draw_info(img, info, video_fps, ai_fps):
         text = f"{info['label'] or 'object'}: {info['dist']:.2f} m  edges {info['edges']:.0%}"
     cv2.putText(img, f"{text}   video {video_fps:.0f} / AI {ai_fps:.1f} FPS",
                 (10, 30), FONT, 0.7, (0, 255, 0), 2)
+
+
+def draw_heights(img, heights):
+    """Tint pixels: green = floor, yellow = low obstacle, red = below the floor"""
+    overlay = img.copy()
+    overlay[np.abs(heights) < 0.1] = (0, 255, 0) # floor
+    overlay[(heights >= 0.1) & (heights < 1.0)] = (0, 255, 255) # low obstacle
+    overlay[heights < -0.1] = (0, 0, 255)
+    cv2.addWeighted(overlay, 0.35, img, 0.65, 0, dst=img)

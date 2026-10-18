@@ -19,3 +19,12 @@ EDGE_STEP = 8 # compare each pixel with its right n pixels
 EDGE_JUMP = 0.3 # distance jumps by n%+ = a "cliff" (an object's edge)
 EDGE_ROWS = 0.2 # wall if n% or fewer of the rows contain a cliff
 SIDE_RANGE = 1.0
+
+
+# --- Camera position (for height math) ---
+# TODO(phone): CAM_HEIGHT -> user sets once in settings
+# TODO(phone): CAM_TILT   -> read live from the phone's motion sensor
+# TODO(phone): CAM_VFOV   -> read from the phone camera's specs
+CAM_HEIGHT = 1.00 # meters from the floor to the webcam
+CAM_TILT = 0.0 # degrees pointing down (0 = looking straight ahead)
+CAM_VFOV = 45.0 # degrees the camera sees from top to bottom
