@@ -1,4 +1,4 @@
-from config import SPEAK_RANGE, REPEAT_EVERY, VERY_CLOSE
+from config import SPEAK_RANGE, REPEAT_EVERY, VERY_CLOSE, SIDE_REPEAT
 
 class Announcer:
     def __init__(self):
@@ -6,8 +6,10 @@ class Announcer:
         self.last_time = 0
         self.said_stop = False
         self.last_label = None
+        self.last_sides = (None, None)   # what we last said about left/right
+        self.last_side_time = 0
 
-    def decide(self, dist, now, speaking, label=None):
+    def decide(self, dist, now, speaking, label=None, left=None, right=None):
         """Return (sentence, interrupt).
         sentence = None  -> stay quiet
         interrupt = True -> cut off the current sentence first"""
@@ -15,7 +17,7 @@ class Announcer:
             self.last_dist = None
             self.said_stop = False
             self.last_label = None
-            return None, False
+            return self.side_message(now, speaking, left, right), False   # NEW: path clear -> talk about sides
 
         rounded = round(dist * 2) / 2
         very_close = dist < VERY_CLOSE
@@ -45,3 +47,28 @@ class Announcer:
         if very_close:
             return f"Stop. {name} very close.", interrupt
         return f"{name} ahead, {rounded:g} meters.", interrupt
+
+    def side_message(self, now, speaking, left, right):
+        """Path ahead is clear: mention what's beside the user, if it changed."""
+        sides = (left, right)
+        if left is None and right is None:
+            self.last_sides = sides # nothing beside me: remember that
+            return None
+        
+        if speaking:
+            return None # never interrupt for sides
+        
+        if sides == self.last_sides and now - self.last_side_time < SIDE_REPEAT:
+            return None # same as before, too soon to repeat
+        
+        self.last_sides = sides
+        self.last_side_time = now
+
+        if left == right == "wall":
+            return "Walls on both sides."
+        parts = []
+        if left:
+            parts.append(f"{left} on your left")
+        if right:
+            parts.append(f"{right} on your right")
+        return " and ".join(parts).capitalize() + "."

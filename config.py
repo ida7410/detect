@@ -33,3 +33,5 @@ LOW_RANGE = 3.0 # only care about low obstacles / drop-offs closer than this (me
 FLOOR_TOL = 0.15 # meters: within ±n cm of 0 counts as floor
 LOW_TOP = 1.0 # meters: low obstacles are between FLOOR_TOL and this height
 LOW_MIN = 0.03 # at least 3% of the path area must be hazard pixels to count
+
+SIDE_REPEAT = 10.0  # seconds: remind about the same side walls at most this often

@@ -29,8 +29,10 @@ def ai_worker():
             continue
 
         info = look(frame) # camera
-        message, interrupt = announcer.decide( # should it describe?
-            info["dist"], time.time(), is_speaking(), info["label"])
+        message, interrupt = announcer.decide(
+            info["dist"], time.time(), is_speaking(), info["label"],
+            info["left"], info["right"])
+        
         if message: # voice
             if interrupt:
                 stop()
